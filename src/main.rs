@@ -9,7 +9,7 @@ async fn main() -> Result<(), std::io::Error> {
     // Logger setup
     LogTracer::init().expect("Failed to set logger");
     // Info or above will be logged if the RUST_LOG environment variable is not set
-    let subscriber = get_subscriber("zero2prod".into(), "info".into());
+    let subscriber = get_subscriber("zero2prod".into(), "info".into(), std::io::stdout);
     set_global_default(subscriber).expect("Failed to set subscriber");
 
     // We want to panic if we cannot read the configuration
