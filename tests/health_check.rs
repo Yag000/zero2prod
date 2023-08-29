@@ -1,4 +1,3 @@
-use actix_web::dev::ConnectionInfo;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
