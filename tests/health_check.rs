@@ -1,4 +1,5 @@
 use once_cell::sync::Lazy;
+use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
@@ -53,16 +54,17 @@ async fn spawn_app() -> TestApp {
 /// This is important in order to avoid polluting an existing database with test data.
 pub async fn configure_database(config: &zero2prod::configurations::DatabaseSettings) -> PgPool {
     // Create database
-    let mut connection = PgConnection::connect(&config.get_connnection_string_without_db())
-        .await
-        .expect("Failed to connect to Postgres");
+    let mut connection =
+        PgConnection::connect(&config.get_connnection_string_without_db().expose_secret())
+            .await
+            .expect("Failed to connect to Postgres");
     connection
         .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
         .await
         .expect("Failed to create database");
 
     // Migrate database
-    let connection_pool = PgPool::connect(&config.get_connnection_string())
+    let connection_pool = PgPool::connect(&config.get_connnection_string().expose_secret())
         .await
         .expect("Failed to connect to Postgres");
     sqlx::migrate!("./migrations")
