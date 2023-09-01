@@ -1,6 +1,6 @@
 use config::Config;
 use secrecy::{ExposeSecret, Secret};
-
+use serde_aux::field_attributes::deserialize_number_from_string;
 #[derive(serde::Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
@@ -9,15 +9,17 @@ pub struct Settings {
 
 #[derive(serde::Deserialize)]
 pub struct DatabaseSettings {
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub port: u16,
     pub username: String,
     pub password: Secret<String>,
-    pub port: u16,
     pub host: String,
     pub database_name: String,
 }
 
 #[derive(serde::Deserialize)]
 pub struct ApplicationSettings {
+    #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
     pub host: String,
 }
@@ -53,11 +55,17 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
         .unwrap_or_else(|_| "local".into())
         .try_into()
         .expect("Failed to parse APP_ENVIRONMENT.");
+    let environment_filename = format!("{}.yaml", environment.as_str());
 
     let settings = Config::builder()
         .add_source(config::File::from(configuration_directory.join("base")).required(true))
         .add_source(
-            config::File::from(configuration_directory.join(environment.as_str())).required(true),
+            config::File::from(configuration_directory.join(environment_filename)).required(true),
+        )
+        .add_source(
+            config::Environment::with_prefix("APP")
+                .prefix_separator("_")
+                .separator("__"),
         );
 
     match settings.build() {
