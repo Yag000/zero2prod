@@ -1,4 +1,3 @@
-use secrecy::ExposeSecret;
 use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
 use tracing::subscriber::set_global_default;
@@ -18,13 +17,7 @@ async fn main() -> Result<(), std::io::Error> {
     let configuration = get_configuration().expect("Failed to read configurations");
     let connection = PgPoolOptions::new()
         .acquire_timeout(std::time::Duration::from_secs(2))
-        .connect_lazy(
-            configuration
-                .database
-                .get_connnection_string()
-                .expose_secret(),
-        )
-        .expect("Failed to connect to Postgres");
+        .connect_lazy_with(configuration.database.with_db());
 
     // Bind the TCP listener socket address with the configuration port
     let address = format!(
